@@ -1,4 +1,4 @@
-import { and, lte, gte, eq, sql } from "drizzle-orm";
+import { and, lte, gte, eq, sql, desc } from "drizzle-orm";
 import { db } from "../db";
 import { goalCompletions, goals } from "../db/schema";
 import dayjs from "dayjs";
@@ -31,6 +31,7 @@ export async function getWeekSummary() {
       })
       .from(goalCompletions)
       .innerJoin(goals, eq(goals.id, goalCompletions.goalId))
+      .orderBy(desc(goalCompletions.createdAt))
       .where(
         and(
           gte(goalCompletions.createdAt, firstDayOfWeek),
@@ -55,6 +56,7 @@ export async function getWeekSummary() {
       })
       .from(goalsCompletedInWeek)
       .groupBy(goalsCompletedInWeek.completedAtDate)
+      .orderBy(desc(goalsCompletedInWeek.completedAtDate))
   );
 
   type GoalsPerDay = Record<
@@ -77,7 +79,7 @@ export async function getWeekSummary() {
     `.mapWith(Number),
       goalsPerDay: sql<GoalsPerDay>`
       JSON_OBJECT_AGG(
-        ${goalsCompletedByWeekDay.completedAtDate},
+        ${goalsCompletedByWeekDay.completedAtDate}, 
         ${goalsCompletedByWeekDay.completions}
       )
     `,
